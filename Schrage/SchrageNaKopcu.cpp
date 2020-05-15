@@ -6,6 +6,7 @@
 #include <chrono>                                                          
 #include <conio.h>                                                          
 #include <stdlib.h>  
+#include <iomanip>
 
 using namespace std;
 
@@ -18,7 +19,7 @@ public:
 	int P;
 	int Q;
 
-	void Set(int nr,int r, int p, int q)
+	void Set(int nr, int r, int p, int q)
 	{
 		Nr = nr;
 		R = r;
@@ -34,7 +35,7 @@ public:
 		Q = z.Q;
 	}
 
-	Zadanie(int nr,int r, int p, int q)
+	Zadanie(int nr, int r, int p, int q)
 	{
 		Nr = nr;
 		R = r;
@@ -73,9 +74,9 @@ public:
 			{
 				next++;
 			}
-			if (Lista[node-1].R > Lista[next-1].R)
+			if (Lista[node - 1].R > Lista[next - 1].R)
 			{
-				Swap(Lista[node-1], Lista[next-1]);
+				Swap(Lista[node - 1], Lista[next - 1]);
 				node = next; next *= 2;
 			}
 			else
@@ -110,9 +111,9 @@ public:
 	void ShiftUp_ByR(int node)
 	{
 		int next = node / 2;
-		while ((node > 1) && (Lista[next-1].R > Lista[node-1].R))
+		while ((node > 1) && (Lista[next - 1].R > Lista[node - 1].R))
 		{
-			Swap(Lista[node-1], Lista[next-1]);
+			Swap(Lista[node - 1], Lista[next - 1]);
 			node = next; next /= 2;
 		}
 	}
@@ -251,7 +252,7 @@ vector<Zadanie> Schrage(ListaZadanNaKopcu N, int n)
 	int i = 0;
 	ListaZadanNaKopcu G;
 	while (!G.isEmpty() or !N.isEmpty())
-	{
+	{ 
 		while (!N.isEmpty() and (N[0].R <= t))
 		{
 			G.Push_ByQ(N.Pop_ByR());
@@ -276,7 +277,7 @@ int SchragePRMT(ListaZadanNaKopcu N, int n)
 	//N - zbior zadan nieuszeregowanych
 	ListaZadanNaKopcu G;
 	ListaZadanNaKopcu N1 = N;
-	Zadanie l(0,0,0,10000000);
+	Zadanie l(0, 0, 0, 10000000);
 	while (!G.isEmpty() or !N.isEmpty())
 	{
 		while (!N.isEmpty() and (N[0].R <= t))
@@ -304,9 +305,9 @@ int SchragePRMT(ListaZadanNaKopcu N, int n)
 			l = G.Pop_ByQ();
 			t = t + l.P;
 			cmax = max(cmax, t + l.Q);
-			
+
 		}
-		
+
 	}
 	return cmax;
 }
@@ -324,17 +325,22 @@ int main()
 
 	char tmp;
 	string line, nr;
-	int n, cmax, cmaxPRMT;
+	int n, cmax, cmaxPRMT, dataIdx = 0, subIdx = 0;
 	bool czyWyswKol;
+	double suma = 0;
 
 	cout << "Czy wyswietlac kolejnosc? (Y/N) ";
 	cin >> tmp;
 	tmp == 'Y' ? czyWyswKol = true : czyWyswKol = false;
 
-	for (int dataIdx = 0; dataIdx <= 8; dataIdx++)
+	while (!file.eof())
 	{
+		subIdx++;
+
 		nr = to_string(dataIdx * 0.000001).substr(5);
+		dataIdx++;
 		while (getline(file, line) && (line != "data." + nr + ":"));
+		if (file.eof()) break;
 		file >> n;
 
 		ListaZadanNaKopcu lst;
@@ -351,20 +357,28 @@ int main()
 		lst.HeapSort_ByR();
 		//lst.HeapShow();
 
-		auto start = chrono::steady_clock::now();
+		auto t_start = std::chrono::high_resolution_clock::now();
 		vector<Zadanie>  K = Schrage(lst, n);
 		cmaxPRMT = SchragePRMT(lst, n);
-		auto end = chrono::steady_clock::now();
-		chrono::duration<double> time = end - start;
+		auto t_end = std::chrono::high_resolution_clock::now();
+		double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+		suma += elapsed_time_ms;
 		cmax = Cmax(K, n);
 
 
-		cout << "data." + nr + ":" << '\t' << "SCHR: " << cmax << " PRMT: " << cmaxPRMT << '\t' << time.count() * 1000000 << " micro sec" << endl;
+		cout << "data." + nr + ":" << "SCHR: " << setw(8) << cmax << " PRMT: " << setw(8) << cmaxPRMT << ' ';
+		cout << '\t' << elapsed_time_ms << " ms" << endl;
 		if (czyWyswKol)
 			wyswietl_kolejnosc(K, n);
 
+		if (subIdx == 10)
+		{
+			subIdx = 0;
+			cout << "Total time:  " << suma / 10 << endl;
+			suma = 0;
+		}
+
 	}
-	
 
 	file.close();
 

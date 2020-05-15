@@ -6,6 +6,7 @@
 #include <chrono>
 #include <conio.h>
 #include <stdlib.h>
+#include <iomanip>
 
 using namespace std;
 
@@ -100,7 +101,7 @@ vector<Zadanie> Schrage(vector<Zadanie> N, int n)
 		while (!N.empty() and (N.front().R <= t))
 		{
 			G.push_back(N.front()); 
-			make_heap(G.begin(), G.end(), CompQ());
+			push_heap(G.begin(), G.end(), CompQ());
 			pop_heap(N.begin(), N.end(), CompR());
 			N.pop_back();
 		}
@@ -134,7 +135,7 @@ int SchragePRMT(vector<Zadanie> N, int n)
 		{
 			Zadanie j = N.front();
 			G.push_back(N.front());
-			make_heap(G.begin(), G.end(), CompQ());
+			push_heap(G.begin(), G.end(), CompQ());
 			pop_heap(N.begin(), N.end(), CompR());
 			N.pop_back();
 
@@ -184,17 +185,22 @@ int main()
 
 	char tmp;
 	string line, nr;
-	int n, cmax, cmaxPRMT;
+	int n, cmax, cmaxPRMT, dataIdx = 0, subIdx = 0;
 	bool czyWyswKol;
+	double suma = 0;
 
 	cout << "Czy wyswietlac kolejnosc? (Y/N) ";
 	cin >> tmp;
 	tmp == 'Y' ? czyWyswKol = true : czyWyswKol = false;
 
-	for (int dataIdx = 0; dataIdx <= 8; dataIdx++)
+	while (!file.eof())
 	{
+		subIdx++;
+
 		nr = to_string(dataIdx * 0.000001).substr(5);
+		dataIdx++;
 		while (getline(file, line) && (line != "data." + nr + ":"));
+		if (file.eof()) break;
 		file >> n;
 
 		vector<Zadanie> lst;
@@ -212,22 +218,27 @@ int main()
 		make_heap(lst.begin(), lst.end(), CompR());
 
 
-		auto start = chrono::steady_clock::now();
+		auto t_start = std::chrono::high_resolution_clock::now();
 		vector<Zadanie>  K = Schrage(lst, n);
 		cmaxPRMT = SchragePRMT(lst, n);
-		auto end = chrono::steady_clock::now();
-		chrono::duration<double> time = end - start;
-		cmax = Cmax(K, n);
+		auto t_end = std::chrono::high_resolution_clock::now();
+		double elapsed_time_ms = std::chrono::duration<double, std::milli >(t_end - t_start).count();
+		suma += elapsed_time_ms;
+		cmax = Cmax(K,n);
 
-
-		cout << "data." + nr + ":" << '\t' << "SCHR: " << cmax << " PRMT: " << cmaxPRMT << '\t' << time.count() * 1000000 << " micro sec" << endl;
+		cout << "data." + nr + ":" << "SCHR: " << setw(8) << cmax << " PRMT: " << setw(8) << cmaxPRMT << ' ';
+		cout << '\t' << elapsed_time_ms << " ms" << endl;
 		if (czyWyswKol)
 			wyswietl_kolejnosc(K, n);
-
+		if (subIdx == 10)
+		{
+			subIdx = 0;
+			cout << "Total time:  " << suma / 10 << endl;
+			suma = 0;
+		}
 
 	}
-
-
+	
 	file.close();
 
 	system("pause");
